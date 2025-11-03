@@ -7,9 +7,40 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .scrollable-table {
+            max-height: 500px;
+            overflow: auto;
+        }
+        .scrollable-table table {
+            min-width: 800px;
+        }
+        .scrollable-horizontal {
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .feature-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .method-result-card {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            padding: 15px;
+        }
+        .table-responsive-custom {
+            max-height: 400px;
+            overflow: auto;
+        }
+    </style>
 </head>
 <body>
-    <!-- شريط التنقل -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="#">
@@ -19,9 +50,7 @@
         </div>
     </nav>
 
-    <!-- المحتوى الرئيسي -->
     <div class="container mt-4">
-        <!-- قسم البيانات -->
         <section id="data-section" class="mb-5">
             <div class="section-header">
                 <h2><i class="fas fa-database me-2"></i>إدارة البيانات</h2>
@@ -29,7 +58,6 @@
             </div>
             
             <div class="row">
-                <!-- توليد بيانات عشوائية -->
                 <div class="col-md-4">
                     <div class="card data-card">
                         <div class="card-header bg-info text-white">
@@ -55,7 +83,6 @@
                     </div>
                 </div>
 
-                <!-- رفع ملف -->
                 <div class="col-md-4">
                     <div class="card data-card">
                         <div class="card-header bg-success text-white">
@@ -74,7 +101,6 @@
                     </div>
                 </div>
 
-                <!-- جلب من رابط -->
                 <div class="col-md-4">
                     <div class="card data-card">
                         <div class="card-header bg-warning text-dark">
@@ -94,28 +120,28 @@
                 </div>
             </div>
 
-            <!-- معاينة البيانات -->
-            <div id="dataPreview" class="mt-4" style="display: none;">
-                <div class="card">
-                    <div class="card-header bg-secondary text-white">
-                        <h5><i class="fas fa-table me-2"></i>معاينة البيانات</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-bordered" id="previewTable">
-                                <thead class="table-light">
-                                    <tr id="previewHeader"></tr>
-                                </thead>
-                                <tbody id="previewBody"></tbody>
-                            </table>
-                        </div>
-                        <div class="mt-2 text-muted" id="dataInfo"></div>
-                    </div>
+           <div id="dataPreview" class="mt-4" style="display: none;">
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h5><i class="fas fa-table me-2"></i>معاينة البيانات</h5>
+        </div>
+        <div class="card-body">
+            <div class="scrollable-table">
+                <div class="scrollable-horizontal">
+                    <table class="table table-striped table-bordered" id="previewTable">
+                        <thead class="table-light">
+                            <tr id="previewHeader"></tr>
+                        </thead>
+                        <tbody id="previewBody"></tbody>
+                    </table>
                 </div>
             </div>
+            <div class="mt-2 text-muted" id="dataInfo"></div>
+        </div>
+    </div>
+</div>
         </section>
 
-        <!-- قسم الخوارزمية الجينية -->
         <section id="ga-section" class="mb-5">
             <div class="section-header">
                 <h2><i class="fas fa-brain me-2"></i>الخوارزمية الجينية</h2>
@@ -135,11 +161,11 @@
                             <div class="row g-3 mt-3">
                                 <div class="col-md-6">
                                     <label class="form-label">حجم المجتمع</label>
-                                    <input type="number" class="form-control" id="popSize" value="40" min="10" max="200">
+                                    <input type="number" class="form-control" id="popSize" value="15" min="10" max="50">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">عدد الأجيال</label>
-                                    <input type="number" class="form-control" id="generations" value="30" min="5" max="100">
+                                    <input type="number" class="form-control" id="generations" value="10" min="5" max="30">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">معدل التهجين</label>
@@ -184,7 +210,6 @@
                 </div>
             </div>
 
-            <!-- نتائج الخوارزمية الجينية -->
             <div id="gaResults" class="mt-4" style="display: none;">
                 <div class="card">
                     <div class="card-header bg-success text-white">
@@ -236,7 +261,6 @@
             </div>
         </section>
 
-        <!-- قسم نتائج الخوارزمية الجينية التفصيلية -->
         <section id="ga-results-detailed-section" class="mb-5" style="display: none;">
             <div class="section-header">
                 <h2><i class="fas fa-brain me-2"></i>نتائج الخوارزمية الجينية</h2>
@@ -249,13 +273,11 @@
                 </div>
                 <div class="card-body">
                     <div id="gaDetailedResultsContent">
-                        <!-- سيتم ملء هذا القسم بالنتائج -->
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- قسم الطرق التقليدية -->
         <section id="traditional-section" class="mb-5">
             <div class="section-header">
                 <h2><i class="fas fa-chart-bar me-2"></i>الطرق التقليدية</h2>
@@ -295,11 +317,17 @@
                             <i class="fas fa-play-circle me-2"></i>تشغيل جميع الطرق التقليدية
                         </button>
                     </div>
+                    <div class="mt-3 text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            الطرق المخزنة: 
+                            <span id="traditionalCacheStatus" class="badge bg-secondary">لا توجد نتائج مخزنة</span>
+                        </small>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- قسم نتائج الطرق التقليدية -->
         <section id="traditional-results-section" class="mb-5" style="display: none;">
             <div class="section-header">
                 <h2><i class="fas fa-list-ol me-2"></i>نتائج الطرق التقليدية</h2>
@@ -312,13 +340,11 @@
                 </div>
                 <div class="card-body">
                     <div id="traditionalResultsContent">
-                        <!-- سيتم ملء هذا القسم بالنتائج -->
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- قسم الطرق الإحصائية -->
         <section id="statistical-section" class="mb-5">
             <div class="section-header">
                 <h2><i class="fas fa-calculator me-2"></i>الطرق الإحصائية</h2>
@@ -364,19 +390,17 @@
                             <i class="fas fa-play-circle me-2"></i>تشغيل جميع الطرق الإحصائية
                         </button>
                     </div>
+                    <div class="mt-3 text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            الطرق المخزنة: 
+                            <span id="statisticalCacheStatus" class="badge bg-secondary">لا توجد نتائج مخزنة</span>
+                        </small>
+                    </div>
                 </div>
-            </div>
-
-            <div class="mt-3 text-center">
-                <small class="text-muted">
-                    <i class="fas fa-info-circle me-1"></i>
-                    الطرق المخزنة: 
-                    <span id="traditionalCacheStatus" class="badge bg-secondary">لا توجد نتائج مخزنة</span>
-                </small>
             </div>
         </section>
 
-        <!-- قسم نتائج الطرق الإحصائية -->
         <section id="statistical-results-section" class="mb-5" style="display: none;">
             <div class="section-header">
                 <h2><i class="fas fa-calculator me-2"></i>نتائج الطرق الإحصائية</h2>
@@ -389,13 +413,11 @@
                 </div>
                 <div class="card-body">
                     <div id="statisticalResultsContent">
-                        <!-- سيتم ملء هذا القسم بالنتائج -->
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- قسم المقارنة -->
         <section id="comparison-section" class="mb-5">
             <div class="section-header">
                 <h2><i class="fas fa-balance-scale me-2"></i>المقارنة والنتائج</h2>
@@ -440,18 +462,20 @@
                         <h5><i class="fas fa-table me-2"></i>النتائج التفصيلية</h5>
                     </div>
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-striped" id="resultsTable">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>الطريقة</th>
-                                        <th>درجة اللياقة</th>
-                                        <th>عدد الميزات</th>
-                                        <th>الميزات المختارة</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="resultsBody"></tbody>
-                            </table>
+                        <div class="scrollable-table">
+                            <div class="scrollable-horizontal">
+                                <table class="table table-striped" id="resultsTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>الطريقة</th>
+                                            <th>درجة اللياقة</th>
+                                            <th>عدد الميزات</th>
+                                            <th>الميزات المختارة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="resultsBody"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -459,7 +483,6 @@
         </section>
     </div>
 
-    <!-- التذييل -->
     <footer class="bg-dark text-light py-4 mt-5">
         <div class="container text-center">
             <p>نظام اختيار الميزات باستخدام الخوارزميات الجينية والطرق التقليدية</p>
@@ -467,7 +490,6 @@
         </div>
     </footer>
 
-    <!-- Bootstrap & jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
