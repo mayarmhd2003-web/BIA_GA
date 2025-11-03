@@ -152,3 +152,4 @@ def variance_threshold(df, target_name, threshold=0.01):
     gc.collect()
     
     return _convert_numpy_types(result)
+"""Create By Noor Bakir"""
