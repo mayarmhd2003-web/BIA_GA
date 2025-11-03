@@ -1,4 +1,3 @@
-// المتغيرات العامة
 let currentDataset = null;
 let currentTarget = null;
 let methodResults = {};
@@ -30,6 +29,9 @@ function setupEventHandlers() {
     $('#compareMethods').click(compareMethods);
     $('#runTraditionalMethods').click(runAllTraditionalMethods);
     $('#runStatisticalMethods').click(runAllStatisticalMethods);
+    
+    $('#popSize').val(15);
+    $('#generations').val(10);
 }
 
 function checkCacheStatus() {
@@ -50,10 +52,19 @@ function checkCacheStatus() {
                 $('#traditionalCacheStatus').text('لا توجد نتائج مخزنة')
                     .removeClass('bg-info').addClass('bg-secondary');
             }
+
+            if (response.statistical_methods_count > 0) {
+                $('#statisticalCacheStatus').text(`${response.statistical_methods_count} طريقة مخزنة`)
+                    .removeClass('bg-secondary').addClass('bg-info');
+            } else {
+                $('#statisticalCacheStatus').text('لا توجد نتائج مخزنة')
+                    .removeClass('bg-info').addClass('bg-secondary');
+            }
         })
         .fail(function() {
             $('#gaCacheStatus, #gaCacheStatus2').text('خطأ في الاتصال').addClass('bg-danger');
             $('#traditionalCacheStatus').text('خطأ في الاتصال').addClass('bg-danger');
+            $('#statisticalCacheStatus').text('خطأ في الاتصال').addClass('bg-danger');
         });
 }
 
@@ -182,28 +193,28 @@ function displayDataPreview(csvData) {
     try {
         const rows = csvData.split('\n');
         const headers = rows[0].split(',');
-        const sampleRows = rows.slice(1, 6);
+        const sampleRows = rows.slice(1, 11);
         
         let headerHtml = '';
         headers.forEach(header => {
-            headerHtml += `<th>${header}</th>`;
+            headerHtml += `<th class="text-nowrap">${header}</th>`;
         });
         $('#previewHeader').html(headerHtml);
         
         let bodyHtml = '';
-        sampleRows.forEach(row => {
+        sampleRows.forEach((row, index) => {
             if (row.trim() === '') return;
             
             const cells = row.split(',');
             bodyHtml += '<tr>';
             cells.forEach(cell => {
-                bodyHtml += `<td>${cell}</td>`;
+                bodyHtml += `<td class="text-nowrap">${cell}</td>`;
             });
             bodyHtml += '</tr>';
         });
         $('#previewBody').html(bodyHtml);
         
-        $('#dataInfo').html(`<i class="fas fa-info-circle me-1"></i> ${rows.length - 1} صف، ${headers.length} عمود`);
+        $('#dataInfo').html(`<i class="fas fa-info-circle me-1"></i> ${rows.length - 1} صف، ${headers.length} عمود (يتم عرض أول 10 صفوف)`);
         $('#dataPreview').fadeIn();
     } catch (error) {
         console.error("❌ خطأ في عرض البيانات:", error);
@@ -217,10 +228,10 @@ function runGeneticAlgorithm() {
         return;
     }
     
-    const popSize = $('#popSize').val();
-    const generations = $('#generations').val();
-    const crossoverRate = $('#crossoverRate').val();
-    const mutationRate = $('#mutationRate').val();
+    const popSize = $('#popSize').val() || 15;
+    const generations = $('#generations').val() || 10;
+    const crossoverRate = $('#crossoverRate').val() || 0.8;
+    const mutationRate = $('#mutationRate').val() || 0.02;
     
     console.log(`🔄 تشغيل GA: popSize=${popSize}, generations=${generations}`);
     
@@ -251,7 +262,6 @@ function runGeneticAlgorithm() {
             showSuccess('تم تشغيل الخوارزمية الجينية بنجاح!');
             checkCacheStatus();
             
-            // عرض النتائج التفصيلية
             setTimeout(() => {
                 displayGADetailedResults();
             }, 500);
@@ -316,26 +326,30 @@ function displayGADetailedResults() {
             
             if (ga.history && ga.history.length > 0) {
                 historyHtml = `
-                    <h6>تطور اللياقة عبر الأجيال:</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-striped">
-                            <thead>
-                                <tr>
-                                    <th>الجيل</th>
-                                    <th>أفضل لياقة</th>
-                                    <th>عدد الميزات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${ga.history.map(gen => `
-                                    <tr>
-                                        <td>${gen.generation}</td>
-                                        <td>${gen.best_fitness ? gen.best_fitness.toFixed(4) : 'N/A'}</td>
-                                        <td>${gen.selected_count || 'N/A'}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                    <div class="mt-4">
+                        <h6>تطور اللياقة عبر الأجيال:</h6>
+                        <div class="scrollable-table">
+                            <div class="scrollable-horizontal">
+                                <table class="table table-sm table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-nowrap">الجيل</th>
+                                            <th class="text-nowrap">أفضل لياقة</th>
+                                            <th class="text-nowrap">عدد الميزات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${ga.history.map(gen => `
+                                            <tr>
+                                                <td class="text-nowrap">${gen.generation}</td>
+                                                <td class="text-nowrap">${gen.best_fitness ? gen.best_fitness.toFixed(4) : 'N/A'}</td>
+                                                <td class="text-nowrap">${gen.selected_count || 'N/A'}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 `;
             }
@@ -382,7 +396,7 @@ function displayGADetailedResults() {
                     <div class="feature-list">
                         ${ga.selected_features && ga.selected_features.length > 0 ? 
                             ga.selected_features.map(feature => `
-                                <div class="feature-item">${feature}</div>
+                                <div class="feature-item text-nowrap">${feature}</div>
                             `).join('') : 
                             '<p class="text-muted">لم يتم اختيار أي ميزات</p>'
                         }
@@ -395,7 +409,6 @@ function displayGADetailedResults() {
             $('#gaDetailedResultsContent').html(html);
             $('#ga-results-detailed-section').fadeIn();
             
-            // تمرير إلى قسم النتائج
             $('html, body').animate({
                 scrollTop: $('#ga-results-detailed-section').offset().top - 70
             }, 800);
@@ -430,7 +443,6 @@ function runAllTraditionalMethods() {
                 return;
             }
             
-            // حفظ النتائج
             response.methods.forEach(method => {
                 methodResults[method.method] = method;
             });
@@ -438,7 +450,6 @@ function runAllTraditionalMethods() {
             showSuccess('تم تشغيل جميع الطرق التقليدية بنجاح!');
             checkCacheStatus();
             
-            // عرض النتائج الفردية
             setTimeout(() => {
                 displayTraditionalResults();
             }, 500);
@@ -497,7 +508,7 @@ function displayTraditionalResults() {
                                 <div class="col-md-6">
                                     <div class="stat-item">
                                         <strong>الميزات المختارة:</strong>
-                                        <div class="features">${featuresList}</div>
+                                        <div class="features text-nowrap">${featuresList}</div>
                                     </div>
                                 </div>
                             </div>
@@ -509,7 +520,6 @@ function displayTraditionalResults() {
             $('#traditionalResultsContent').html(html);
             $('#traditional-results-section').fadeIn();
             
-            // تمرير إلى قسم النتائج
             $('html, body').animate({
                 scrollTop: $('#traditional-results-section').offset().top - 70
             }, 800);
@@ -544,7 +554,6 @@ function runAllStatisticalMethods() {
                 return;
             }
             
-            // حفظ النتائج
             response.methods.forEach(method => {
                 methodResults[method.method] = method;
             });
@@ -552,7 +561,6 @@ function runAllStatisticalMethods() {
             showSuccess('تم تشغيل جميع الطرق الإحصائية بنجاح!');
             checkCacheStatus();
             
-            // عرض النتائج الفردية
             setTimeout(() => {
                 displayStatisticalResults();
             }, 500);
@@ -611,7 +619,7 @@ function displayStatisticalResults() {
                                 <div class="col-md-6">
                                     <div class="stat-item">
                                         <strong>الميزات المختارة:</strong>
-                                        <div class="features">${featuresList}</div>
+                                        <div class="features text-nowrap">${featuresList}</div>
                                     </div>
                                 </div>
                             </div>
@@ -623,7 +631,6 @@ function displayStatisticalResults() {
             $('#statisticalResultsContent').html(html);
             $('#statistical-results-section').fadeIn();
             
-            // تمرير إلى قسم النتائج
             $('html, body').animate({
                 scrollTop: $('#statistical-results-section').offset().top - 70
             }, 800);
@@ -705,10 +712,10 @@ function displayComparisonResults(results) {
             const stat = results.stats[method];
             resultsHtml += `
                 <tr>
-                    <td>${method}</td>
-                    <td>${stat.fitness_score ? stat.fitness_score.toFixed(4) : 'غير متوفر'}</td>
-                    <td>${stat.n_features}</td>
-                    <td>${stat.selected_features ? stat.selected_features.join(', ') : 'لا توجد'}</td>
+                    <td class="text-nowrap">${method}</td>
+                    <td class="text-nowrap">${stat.fitness_score ? stat.fitness_score.toFixed(4) : 'غير متوفر'}</td>
+                    <td class="text-nowrap">${stat.n_features}</td>
+                    <td class="text-nowrap">${stat.selected_features ? stat.selected_features.join(', ') : 'لا توجد'}</td>
                 </tr>
             `;
         });
@@ -719,10 +726,13 @@ function displayComparisonResults(results) {
 }
 
 function clearAllCache() {
+    showLoading($('#clearCache'));
+    
     $.ajax({
         url: '/api/cache/clear_all',
         type: 'POST',
         success: function(response) {
+            hideLoading($('#clearCache'));
             if (response.success) {
                 methodResults = {};
                 gaResult = null;
@@ -733,9 +743,13 @@ function clearAllCache() {
                 $('#ga-results-detailed-section').hide();
                 showSuccess(response.message);
                 checkCacheStatus();
+                
+                $('#popSize').val(15);
+                $('#generations').val(10);
             }
         },
         error: function(xhr, status, error) {
+            hideLoading($('#clearCache'));
             let errorMsg = 'فشل في الاتصال بالخادم';
             if (xhr.responseJSON && xhr.responseJSON.error) {
                 errorMsg = xhr.responseJSON.error;
@@ -761,7 +775,6 @@ function hideLoading(element) {
 }
 
 function showError(message) {
-    // استخدام alert بسيط للخطأ
     alert(`❌ ${message}`);
     console.error("❌ خطأ:", message);
 }
