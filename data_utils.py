@@ -36,7 +36,7 @@ def preprocess_dataset(df, target_name=None):
             X_imputed[c] = X_imputed[c].astype('category').cat.codes
     scaler = StandardScaler()
     X_scaled = pd.DataFrame(scaler.fit_transform(X_imputed), columns=X_imputed.columns)
-    # التأكد أن y متوافق نوعياً مع التصنيف
+    
     try:
         y = pd.to_numeric(y)
     except Exception:
