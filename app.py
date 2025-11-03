@@ -7,14 +7,13 @@ import json
 from data_utils import generate_random_dataset, preprocess_dataset
 from ga_module import run_genetic_algorithm
 import traditional_methods as tm
+import statistical_methods as sm
 from evaluate import compare_and_stats, plot_results_base64
 
 app = Flask(__name__)
 
-# معالج JSON مخصص للتعامل مع أنواع NumPy
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
-        """تحويل أنواع NumPy إلى أنواع Python قابلة للتحويل إلى JSON"""
         if isinstance(obj, (np.integer, np.int32, np.int64)):
             return int(obj)
         elif isinstance(obj, (np.floating, np.float32, np.float64)):
@@ -29,21 +28,19 @@ class NumpyEncoder(json.JSONEncoder):
 
 app.json_encoder = NumpyEncoder
 
-# ذاكرة مؤقتة لتخزين النتائج
 _cache = {
     'last_ga': None,
     'last_ga_params': {},
-    'traditional_methods': {}
+    'traditional_methods': {},
+    'statistical_methods': {}
 }
 
 @app.route('/')
 def index():
-    """الصفحة الرئيسية للتطبيق"""
     return render_template('index.html')
 
 @app.route('/api/generate', methods=['POST'])
 def api_generate():
-    """توليد بيانات عشوائية جديدة"""
     try:
         print("🔍 بدء توليد البيانات...")
         payload = request.get_json(force=True) or {}
@@ -55,7 +52,6 @@ def api_generate():
         
         print(f"🔢 المعاملات: n_features={n_features}, n_samples={n_samples}, n_informative={n_informative}")
         
-        # التحقق من صحة المدخلات
         if n_features <= 0 or n_samples <= 0 or n_informative <= 0:
             return jsonify({'error': 'القيم يجب أن تكون أكبر من الصفر'}), 400
         
@@ -86,7 +82,6 @@ def api_generate():
 
 @app.route('/api/upload', methods=['POST'])
 def api_upload():
-    """رفع ملف بيانات من المستخدم"""
     try:
         if 'file' not in request.files:
             return jsonify({'error': 'لم يتم اختيار ملف'}), 400
@@ -115,7 +110,6 @@ def api_upload():
 
 @app.route('/api/fetch', methods=['POST'])
 def api_fetch():
-    """جلب بيانات من رابط خارجي"""
     try:
         url = (request.json or {}).get('url')
         if not url:
@@ -139,7 +133,6 @@ def api_fetch():
         return jsonify({'error': 'خطأ في جلب البيانات: ' + str(e)}), 500
 
 def _convert_to_serializable(obj):
-    """تحويل الكائنات غير القابلة للتحويل إلى JSON إلى أنواع قابلة للتحويل"""
     if isinstance(obj, (np.integer, np.int32, np.int64)):
         return int(obj)
     elif isinstance(obj, (np.floating, np.float32, np.float64)):
@@ -147,7 +140,7 @@ def _convert_to_serializable(obj):
     elif isinstance(obj, np.ndarray):
         return obj.tolist()
     elif isinstance(obj, pd.Series):
-        return obj.astype(float).tolist()  # تحويل إلى float أولاً
+        return obj.astype(float).tolist()
     elif isinstance(obj, dict):
         return {k: _convert_to_serializable(v) for k, v in obj.items()}
     elif isinstance(obj, list):
@@ -158,7 +151,6 @@ def _convert_to_serializable(obj):
         return obj
 
 def _read_df_from_payload(payload):
-    """قراءة البيانات من payload الطلب"""
     raw = payload.get('df')
     if raw is None:
         raise ValueError('لا توجد بيانات في الطلب')
@@ -166,12 +158,10 @@ def _read_df_from_payload(payload):
     print(f"🔍 قراءة البيانات من الـ payload. الطول: {len(raw)}")
     
     try:
-        # محاولة قراءة كـ CSV (هذا ما نريده)
         df = pd.read_csv(io.StringIO(raw))
         print(f"✅ تم تحميل البيانات كـ CSV بنجاح. الشكل: {df.shape}")
     except Exception as e:
         print(f"❌ فشل في تحميل البيانات كـ CSV: {str(e)}")
-        # محاولة قراءة كـ JSON كخيار احتياطي
         try:
             df = pd.read_json(io.StringIO(raw), orient='split')
             print(f"✅ تم تحميل البيانات كـ JSON بنجاح. الشكل: {df.shape}")
@@ -188,7 +178,6 @@ def _read_df_from_payload(payload):
 
 @app.route('/api/traditional/run', methods=['POST'])
 def api_traditional_run():
-    """تشغيل طريقة تقليدية لاختيار الميزات"""
     try:
         payload = request.json or {}
         print(f"🔍 تشغيل طريقة تقليدية: {payload.get('method')}")
@@ -200,20 +189,29 @@ def api_traditional_run():
 
         cache_key = f"{method_name}_{hash(str(df.values.tobytes()) + target)}"
         
-        if cache_key in _cache['traditional_methods']:
-            cached_result = _cache['traditional_methods'][cache_key]
+        if method_name in ['embedding_rf', 'l1_logistic', 'rfe_rf']:
+            cache_dict = _cache['traditional_methods']
+        else:
+            cache_dict = _cache['statistical_methods']
+            
+        if cache_key in cache_dict:
+            cached_result = cache_dict[cache_key]
             print(f"📦 استخدام النتيجة المخزنة للطريقة: {method_name}")
             return jsonify({**cached_result, 'cached': True})
 
-        method_map = {
-            'embedding_rf': tm.embedding_rf,
-            'filter_chi2': tm.filter_chi2,
-            'mutual_info': tm.mutual_info,
-            'f_classif': tm.f_classif_filter,
-            'l1_logistic': tm.l1_logistic,
-            'rfe_rf': tm.rfe_rf,
-            'variance_threshold': tm.variance_threshold
-        }
+        if method_name in ['embedding_rf', 'l1_logistic', 'rfe_rf']:
+            method_map = {
+                'embedding_rf': tm.embedding_rf,
+                'l1_logistic': tm.l1_logistic,
+                'rfe_rf': tm.rfe_rf
+            }
+        else:
+            method_map = {
+                'filter_chi2': sm.filter_chi2,
+                'mutual_info': sm.mutual_info,
+                'f_classif': sm.f_classif_filter,
+                'variance_threshold': sm.variance_threshold
+            }
 
         func = method_map.get(method_name)
         if not func:
@@ -226,10 +224,9 @@ def api_traditional_run():
         if 'method' not in res:
             res['method'] = method_name
         
-        # تحويل النتائج إلى أنواع قابلة للتحويل إلى JSON
         res = _convert_to_serializable(res)
         
-        _cache['traditional_methods'][cache_key] = res
+        cache_dict[cache_key] = res
         print(f"✅ تم تشغيل الطريقة بنجاح: {method_name}")
         
         return jsonify({**res, 'cached': False})
@@ -240,15 +237,14 @@ def api_traditional_run():
 
 @app.route('/api/ga', methods=['POST'])
 def api_ga():
-    """تشغيل الخوارزمية الجينية"""
     try:
         payload = request.json or {}
         print("🔍 بدء تشغيل الخوارزمية الجينية...")
         
         df, target = _read_df_from_payload(payload)
         
-        pop_size = int(payload.get('pop_size', 40))
-        generations = int(payload.get('generations', 30))
+        pop_size = int(payload.get('pop_size', 15))
+        generations = int(payload.get('generations', 10))
         crossover_rate = float(payload.get('crossover_rate', 0.8))
         mutation_rate = float(payload.get('mutation_rate', 0.02))
         use_cache = bool(payload.get('use_cache', True))
@@ -276,7 +272,6 @@ def api_ga():
             mutation_rate=mutation_rate
         )
         
-        # تحويل النتائج إلى أنواع قابلة للتحويل إلى JSON
         res = _convert_to_serializable(res)
         
         _cache['last_ga'] = res
@@ -291,7 +286,6 @@ def api_ga():
 
 @app.route('/api/run_all_traditional', methods=['POST'])
 def api_run_all_traditional():
-    """تشغيل جميع الطرق التقليدية دفعة واحدة"""
     try:
         payload = request.json or {}
         print("🔍 تشغيل جميع الطرق التقليدية...")
@@ -321,7 +315,6 @@ def api_run_all_traditional():
                     if 'method' not in res:
                         res['method'] = method_name
                     
-                    # تحويل النتائج إلى أنواع قابلة للتحويل إلى JSON
                     res = _convert_to_serializable(res)
                     
                     _cache['traditional_methods'][cache_key] = res
@@ -342,7 +335,6 @@ def api_run_all_traditional():
 
 @app.route('/api/run_all_statistical', methods=['POST'])
 def api_run_all_statistical():
-    """تشغيل جميع الطرق الإحصائية دفعة واحدة"""
     try:
         payload = request.json or {}
         print("🔍 تشغيل جميع الطرق الإحصائية...")
@@ -356,16 +348,16 @@ def api_run_all_statistical():
             try:
                 cache_key = f"{method_name}_{hash(str(df.values.tobytes()) + target)}"
                 
-                if cache_key in _cache['traditional_methods']:
-                    res = _cache['traditional_methods'][cache_key]
+                if cache_key in _cache['statistical_methods']:
+                    res = _cache['statistical_methods'][cache_key]
                     res['cached'] = True
                     print(f"📦 استخدام النتيجة المخزنة للطريقة: {method_name}")
                 else:
                     method_map = {
-                        'filter_chi2': tm.filter_chi2,
-                        'mutual_info': tm.mutual_info,
-                        'f_classif': tm.f_classif_filter,
-                        'variance_threshold': tm.variance_threshold
+                        'filter_chi2': sm.filter_chi2,
+                        'mutual_info': sm.mutual_info,
+                        'f_classif': sm.f_classif_filter,
+                        'variance_threshold': sm.variance_threshold
                     }
                     func = method_map.get(method_name)
                     print(f"🔄 تشغيل الطريقة: {method_name}")
@@ -373,10 +365,9 @@ def api_run_all_statistical():
                     if 'method' not in res:
                         res['method'] = method_name
                     
-                    # تحويل النتائج إلى أنواع قابلة للتحويل إلى JSON
                     res = _convert_to_serializable(res)
                     
-                    _cache['traditional_methods'][cache_key] = res
+                    _cache['statistical_methods'][cache_key] = res
                     res['cached'] = False
                     print(f"✅ تم تشغيل الطريقة: {method_name}")
                 
@@ -394,7 +385,6 @@ def api_run_all_statistical():
 
 @app.route('/api/compare', methods=['POST'])
 def api_compare():
-    """مقارنة نتائج جميع الطرق"""
     try:
         payload = request.json or {}
         print("🔍 بدء المقارنة...")
@@ -418,7 +408,6 @@ def api_compare():
         stats = compare_and_stats(df, target, methods_results)
         plots = plot_results_base64(df, target, methods_results)
         
-        # تحويل الإحصائيات إلى أنواع قابلة للتحويل إلى JSON
         stats = _convert_to_serializable(stats)
         
         print("✅ تمت المقارنة بنجاح")
@@ -434,34 +423,31 @@ def api_compare():
 
 @app.route('/api/cache/status', methods=['GET'])
 def api_cache_status():
-    """الحصول على حالة الذاكرة المؤقتة"""
     return jsonify({
         'has_ga': _cache.get('last_ga') is not None, 
         'ga_params': _cache.get('last_ga_params'),
-        'traditional_methods_count': len(_cache.get('traditional_methods', {}))
+        'traditional_methods_count': len(_cache.get('traditional_methods', {})),
+        'statistical_methods_count': len(_cache.get('statistical_methods', {}))
     })
 
 @app.route('/api/cache/clear_all', methods=['POST'])
 def api_clear_all_cache():
-    """مسح كل الذاكرة المؤقتة"""
     try:
         _cache['last_ga'] = None
         _cache['last_ga_params'] = {}
         _cache['traditional_methods'] = {}
+        _cache['statistical_methods'] = {}
         return jsonify({'success': True, 'message': 'تم مسح كل الذاكرة المؤقتة'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# إضافة routes جديدة لعرض النتائج الفردية
 @app.route('/api/results/traditional', methods=['GET'])
 def api_get_traditional_results():
-    """الحصول على نتائج الطرق التقليدية المخزنة"""
     try:
         traditional_methods = ['embedding_rf', 'l1_logistic', 'rfe_rf']
         results = []
         
         for method_name in traditional_methods:
-            # البحث عن النتيجة في الذاكرة المؤقتة
             found = False
             for cache_key, cached_result in _cache['traditional_methods'].items():
                 if method_name in cache_key:
@@ -484,15 +470,13 @@ def api_get_traditional_results():
 
 @app.route('/api/results/statistical', methods=['GET'])
 def api_get_statistical_results():
-    """الحصول على نتائج الطرق الإحصائية المخزنة"""
     try:
         statistical_methods = ['filter_chi2', 'mutual_info', 'f_classif', 'variance_threshold']
         results = []
         
         for method_name in statistical_methods:
-            # البحث عن النتيجة في الذاكرة المؤقتة
             found = False
-            for cache_key, cached_result in _cache['traditional_methods'].items():
+            for cache_key, cached_result in _cache['statistical_methods'].items():
                 if method_name in cache_key:
                     results.append(cached_result)
                     found = True
@@ -513,7 +497,6 @@ def api_get_statistical_results():
 
 @app.route('/api/results/ga', methods=['GET'])
 def api_get_ga_results():
-    """الحصول على نتائج الخوارزمية الجينية المخزنة"""
     try:
         if _cache.get('last_ga') is not None:
             return jsonify({'ga_result': _cache['last_ga']})
@@ -523,10 +506,8 @@ def api_get_ga_results():
         print(f"❌ خطأ في الحصول على نتائج GA: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-# إضافة route للتحقق من صحة السيرفر
 @app.route('/api/health', methods=['GET'])
 def api_health():
-    """التحقق من صحة السيرفر"""
     return jsonify({'status': 'ok', 'message': 'السيرفر يعمل بشكل صحيح'})
 
 if __name__ == '__main__':
