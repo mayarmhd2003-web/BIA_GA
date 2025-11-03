@@ -16,7 +16,6 @@ body {
     min-height: 100vh;
 }
 
-/* تنسيق رأس الأقسام */
 .section-header {
     text-align: center;
     margin-bottom: 2rem;
@@ -38,7 +37,6 @@ body {
     margin-bottom: 0;
 }
 
-/* تنسيق البطاقات */
 .card {
     border: none;
     border-radius: 15px;
@@ -58,7 +56,6 @@ body {
     padding: 1rem 1.5rem;
 }
 
-/* صناديق الطرق */
 .method-box {
     border-left: 5px solid;
 }
@@ -96,7 +93,6 @@ body {
     font-weight: 600;
 }
 
-/* بطاقات البيانات */
 .data-card {
     height: 100%;
 }
@@ -105,14 +101,12 @@ body {
     padding: 1.5rem;
 }
 
-/* بطاقة المعلومات */
 .info-card {
     background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
     border: none;
     height: 100%;
 }
 
-/* بطاقات الإحصائيات */
 .stat-card {
     display: flex;
     align-items: center;
@@ -146,7 +140,6 @@ body {
     font-size: 0.9rem;
 }
 
-/* قائمة الميزات */
 .feature-list {
     max-height: 200px;
     overflow-y: auto;
@@ -166,7 +159,6 @@ body {
     font-size: 0.9rem;
 }
 
-/* تخصيص الأزرار */
 .btn {
     border-radius: 8px;
     font-weight: 500;
@@ -217,7 +209,6 @@ body {
     color: white;
 }
 
-/* تخصيص الحقول */
 .form-control, .form-select {
     border-radius: 8px;
     border: 2px solid #e9ecef;
@@ -231,7 +222,6 @@ body {
     transform: translateY(-2px);
 }
 
-/* تخصيص الجداول */
 .table {
     border-radius: 10px;
     overflow: hidden;
@@ -253,7 +243,6 @@ body {
     background-color: rgba(0, 0, 0, 0.02);
 }
 
-/* تخصيص الشريط العلوي */
 .navbar {
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     background: linear-gradient(135deg, var(--primary-color), #4dabf7) !important;
@@ -264,13 +253,11 @@ body {
     font-size: 1.5rem;
 }
 
-/* تخصيص التذييل */
 footer {
     margin-top: auto;
     background: linear-gradient(135deg, #2c3e50, #34495e) !important;
 }
 
-/* تخصيص الشريط الجانبي */
 .feature-list::-webkit-scrollbar {
     width: 6px;
 }
@@ -289,7 +276,6 @@ footer {
     background: #0b5ed7;
 }
 
-/* تأثيرات للتحميل */
 .loading {
     position: relative;
     pointer-events: none;
@@ -309,7 +295,7 @@ footer {
     align-items: center;
 }
 
-/* الرسوم المتحركة */
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -319,7 +305,7 @@ footer {
     animation: fadeIn 0.5s ease-in;
 }
 
-/* الاستجابة للشاشات الصغيرة */
+
 @media (max-width: 768px) {
     .section-header {
         padding: 1rem;
@@ -342,14 +328,14 @@ footer {
     }
 }
 
-/* تخصيص البادجات */
+
 .badge {
     font-size: 0.75rem;
     padding: 0.5rem 0.75rem;
     border-radius: 20px;
 }
 
-/* تخصيص النصوص الصغيرة */
+
 .text-muted {
     color: #6c757d !important;
 }
@@ -358,7 +344,7 @@ footer {
     font-size: 0.8rem;
 }
 
-/* تخصيص القوائم */
+
 .fa-ul {
     margin-right: 2rem;
 }
@@ -368,7 +354,7 @@ footer {
     left: auto;
 }
 
-/* بطاقات نتائج الطرق */
+
 .method-result-card {
     background: white;
     border-radius: 10px;
@@ -443,7 +429,7 @@ footer {
     overflow-y: auto;
 }
 
-/* بطاقات إحصائيات GA */
+
 .ga-stat-card {
     display: flex;
     align-items: center;
@@ -479,7 +465,7 @@ footer {
     font-size: 0.8rem;
 }
 
-/* تنسيق الجداول */
+
 .table-responsive {
     border-radius: 8px;
     overflow: hidden;
@@ -491,7 +477,7 @@ footer {
     font-size: 0.85rem;
 }
 
-/* تنبيهات */
+
 .alert {
     border-radius: 8px;
     border: none;
