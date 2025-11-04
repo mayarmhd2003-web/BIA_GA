@@ -43,3 +43,4 @@ def preprocess_dataset(df, target_name=None):
         y = y.astype('category').cat.codes
     df_clean = pd.concat([X_scaled, pd.Series(y, name=target_name)], axis=1)
     return df_clean, target_name
+
