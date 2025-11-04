@@ -144,3 +144,4 @@ def plot_results_base64(df, target_name, methods_results):
 
     gc.collect()
     return results
+
